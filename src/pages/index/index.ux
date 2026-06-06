@@ -1,0 +1,566 @@
+<template>
+
+  <div class="page" onswipe="loadpageProccess">
+
+    <div class="black-screen" if="{{hiddenScreen}}" onclick="onBlackScreenTap">
+      <text class="clock-text" onclick="onClockTap">{{clockTime}}</text>
+      <text class="exit-btn" onclick="exitApp">退出</text>
+    </div>
+
+    <block if="{{!hiddenScreen}}">
+      <image class="logo" src="deactivelogo.png" if="{{uishow}}"></image>
+      <image class="background" src="{{bg}}" onclick="hidui" if="{{uishow}}"></image>
+
+      <image class="about" src="info.png" @click="about" if="{{uishow}}"></image>
+      <image class="settings" src="settings.png" @click="settings" if="{{uishow}}"></image>
+
+      <div class="group-1">
+
+        <text class="mid" onclick="start" if="{{uishow}}">开始游戏</text>
+        <text class="mid" onclick="lastStart" if="{{uishow}}">继续上次</text>
+
+        <text class="mid" onclick="loadProccess" if="{{uishow}}">读取存档</text>
+        <text class="mid" onclick="more" if="{{uishow}}">更多</text>
+
+      </div>
+      <image class="bc" src="/common/bcgi/空_夕_秋.jpg" if="{{!uishow}}"></image>
+      <image class="reset2" src="/common/reset.png" onclick="reset" if="{{!uishow}}"></image> 
+      <image class="background2" src="{{bg}}" onclick="hidui" if="{{!uishow}}"></image>
+
+      <image class="reset" src="/common/reset.png" onclick="reset" if="{{uishow}}"></image>
+      <image class="back" src="/common/go.png" onclick="die" if="{{uishow}}"></image>
+      <div class="page1" if="{{loadShow}}">
+        <div class="time-bar">
+          <text class="time-text">{{currentTime}}</text>
+        </div>
+        <scroll id="mainScroll" class="scroll" scroll-y="{{true}}" bounces="{{true}}">
+          <div class="save-item" for="{{(index, item) in saveSlots}}" onclick="loadSlot(index + 1)">
+            <text class="load">存档{{index + 1}}: {{item.text}}</text>
+          </div>
+          <div class="scroll-bottom-space"></div>
+          <text class="load2"></text>
+        </scroll>
+        <div class="back-btn-wrap" onclick="unloadProccess">
+          <text class="back-btn-text">返回</text>
+        </div>
+      </div>
+    </block>
+
+  </div>
+</template>
+
+<script>
+import app from '@system.app'
+import storage from '@system.storage'
+import router from '@system.router'
+import prompt from '@system.prompt'
+import { DEFAULT_SAVE_SLOTS, MAX_SAVE_SLOTS } from '../../common/config.js'
+
+if (!globalThis.__hiddenModeShown) globalThis.__hiddenModeShown = false;
+
+export default {
+  data: {
+  uishow:true,
+  hiddenScreen: false,
+  tapCount: 0,
+  clockTime: '00:00',
+  clockTimer: null,
+  readProgress: 1,
+  currentTime: '',
+  saveSlots: [...DEFAULT_SAVE_SLOTS],
+  maxSaveSlots: MAX_SAVE_SLOTS,
+  loadShow: false,
+  bgIndex:0,
+  bgList:[
+    '/common/title_bg0.jpg',
+    '/common/title_bg1.jpg',
+    '/common/title_bg2.jpg',
+    '/common/title_bg3.jpg',
+    '/common/title_bg4.jpg',
+    '/common/title_bg5.jpg',
+    '/common/title_bg6.jpg',
+    '/common/title_bg7.jpg',
+    '/common/title_bg8.jpg',
+  ],
+  bg:'/common/title_bg0.jpg',
+  firstLaunchChecked: false,
+},
+  hidui(){
+    this.uishow = !this.uishow;
+  },
+  
+  async onShow(){
+    await this.checkHiddenMode();
+    if (this.hiddenScreen) return;
+    this.checkFirstLaunch();
+    this.updateTime();
+
+    storage.get({
+      key: 'bg',
+      success: (data) => {
+        const savedIndex = parseInt(data);
+        if (!isNaN(savedIndex) && savedIndex >= 0 && savedIndex < this.bgList.length) {
+          this.bgIndex = savedIndex;
+        } else {
+          this.bgIndex = 0;
+        }
+        this.updateBackground();
+      },
+      fail: () => {
+        this.updateBackground();
+      }
+    });
+    
+    storage.get({
+      key: 'readProgress',
+      success:(data)=> {
+        this.readProgress = Number(data) || 1
+      },
+      fail:()=>{}
+    })
+    
+    await this.loadSaveSlots();
+  },
+
+  // 加载存档位数据
+  async loadSaveSlots(){ 
+    try {
+      const saveSlotsData = await new Promise((resolve) => {
+        storage.get({
+          key: 'saveSlots',
+          success: (data) => {
+            if (data) {
+              try {
+                resolve(JSON.parse(data));
+              } catch (e) {
+                resolve(null);
+              }
+            } else {
+              resolve(null);
+            }
+          },
+          fail: () => resolve(null)
+        });
+      });
+      
+      if (saveSlotsData && Array.isArray(saveSlotsData)) {
+        this.saveSlots = saveSlotsData;
+      }
+      
+      const loadPromises = this.saveSlots.map((slot, i) => {
+        return new Promise((resolve) => {
+          storage.get({ 
+            key: `p${i + 1}`,
+            success: (data) => { 
+              const progress = Number(data) || 1;
+              slot.progress = progress;
+              slot.text = progress === 1 ? "空" : `进度${progress}`;
+              resolve(true);
+            }, 
+            fail: () => { 
+              slot.progress = 1;
+              slot.text = "空";
+              resolve(false);
+            } 
+          }); 
+        });
+      });
+      
+      await Promise.all(loadPromises);
+    } catch (error) {
+      console.error('加载存档时出错:', error);
+    }
+  },
+
+  reset() {
+    this.bgIndex = (this.bgIndex + 1) % this.bgList.length;
+    this.updateBackground();
+    storage.set({ 
+      key: 'bg',
+      value: String(this.bgIndex), 
+      success: () => {}, 
+      fail: () => {} 
+    });
+  },
+
+  updateBackground(){
+    const index = this.bgIndex % this.bgList.length;
+    this.bg = this.bgList[index];
+  },
+  
+  updateTime(){
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    this.currentTime = `${hours}:${minutes}`;
+  },
+  
+  // 加载指定存档
+  loadSlot(slotIndex){ 
+    storage.get({
+      key: `p${slotIndex}`,
+      success: (data) => {
+        const savedProgress = Number(data) || 1;
+        storage.set({
+          key: 'readProgress',
+          value: savedProgress.toString(),
+          success: () => {},
+          fail: () => {}
+        });
+        router.replace({ uri:'pages/detail' });
+        this.loadShow = false;
+      },
+      fail: () => {
+        prompt.showToast({ message: '加载失败', duration: 2000 });
+      }
+    });
+  },
+  
+  about(){
+    router.push({
+      uri:'pages/about',
+    })
+  },
+
+  settings(){
+    router.push({
+      uri:'pages/settings',
+    })
+  },
+  more(){
+    router.push({
+      uri:'pages/more',
+    })
+  },
+  die(){
+    app.terminate();
+  },
+  start(){
+    storage.set({
+      key: 'readProgress',
+      value: '1',
+      success: () => {},
+      fail: () => {}
+    });
+    router.replace({ uri:'pages/detail' });
+  },
+
+  lastStart(){
+    router.replace({ uri:'pages/detail' });
+  },
+  loadProccess(){
+      this.loadShow = true;
+  },
+  unloadProccess(){
+      this.loadShow = false;
+  },
+  loadpageProccess(e){
+    if(this.loadShow === true && e.direction === 'right'){
+      this.loadShow = false;
+    }
+  },
+
+  async checkHiddenMode() {
+    if (globalThis.__hiddenModeShown) return;
+    return new Promise((resolve) => {
+      storage.get({
+        key: 'hiddenModeSetting',
+        success: (data) => {
+          if (data === 'true') {
+            this.hiddenScreen = true;
+            this.tapCount = 0;
+            this.startClock();
+          }
+          globalThis.__hiddenModeShown = true;
+          resolve();
+        },
+        fail: () => {
+          globalThis.__hiddenModeShown = true;
+          resolve();
+        }
+      });
+    });
+  },
+
+  startClock() {
+    this.updateClockTime();
+    this.clockTimer = setInterval(() => {
+      this.updateClockTime();
+    }, 1000);
+  },
+
+  updateClockTime() {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    this.clockTime = `${hours}:${minutes}`;
+  },
+
+  onClockTap(e) {
+    e && e.stopPropagation && e.stopPropagation();
+    this.tapCount++;
+    if (this.tapCount >= 20) {
+      if (this.clockTimer) {
+        clearInterval(this.clockTimer);
+        this.clockTimer = null;
+      }
+      this.hiddenScreen = false;
+      this.tapCount = 0;
+      this.checkFirstLaunch();
+      this.updateTime();
+    }
+  },
+
+  onBlackScreenTap() {
+    this.tapCount++;
+    if (this.tapCount >= 20) {
+      if (this.clockTimer) {
+        clearInterval(this.clockTimer);
+        this.clockTimer = null;
+      }
+      this.hiddenScreen = false;
+      this.tapCount = 0;
+      this.checkFirstLaunch();
+      this.updateTime();
+    }
+  },
+
+  exitApp() {
+    app.terminate();
+  },
+
+  checkFirstLaunch() {
+    if (this.firstLaunchChecked) return;
+    this.firstLaunchChecked = true;
+
+    storage.get({
+      key: 'hasLaunchedBefore2',
+      success: (data) => {
+        if (data !== 'true') {
+          storage.set({
+            key: 'hasLaunchedBefore2',
+            value: 'true',
+            success: () => {},
+            fail: () => {}
+          });
+          router.push({ uri: 'pages/about' });
+        }
+      },
+      fail: () => {
+        storage.set({
+          key: 'hasLaunchedBefore2',
+          value: 'true',
+          success: () => {},
+          fail: () => {}
+        });
+        router.push({ uri: 'pages/about' });
+      }
+    });
+  }
+};
+</script>
+
+<style>
+.page{
+  background-color: rgb(248, 248, 255);
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  height: 490px;
+  overflow: hidden;
+}
+.about{
+  background-color: rgba(255, 255, 255, 0);
+  justify-content: flex-start;
+  align-items: flex-end;
+  top: 15px;
+  left: 32px;
+  position: absolute;
+}
+.hd{
+    position: absolute;
+    top: 0;
+}
+.logo{
+  top: 200px;
+  position: absolute;
+  width: 188px;
+  object-fit: contain;
+  z-index: 3;
+}
+.background{
+  top:90px;
+  position: absolute;
+  width: 212px;
+  object-fit: cover;
+  z-index: 1;
+}
+.background2{
+  top:130px;
+  position: absolute;
+  width: 212px;
+  object-fit: cover;
+}
+.reset2{
+  background-color: rgba(255, 255, 255, 0);
+  justify-content: flex-start;
+  align-items: flex-end;
+  bottom: 15px;
+  right: 25px;
+  position: absolute;
+}
+.settings{
+  background-color: rgba(255, 255, 255, 0);
+  justify-content: flex-start;
+  align-items: flex-end;
+  top: 15px;
+  right: 32px;
+  position: absolute;
+}
+.reset{
+  background-color: rgba(255, 255, 255, 0);
+  justify-content: flex-start;
+  align-items: flex-end;
+  bottom: 130px;
+  right: 6px;
+  position: absolute;
+
+}
+.back{
+  background-color: rgba(255, 255, 255, 0);
+  justify-content: flex-start;
+  align-items: flex-end;
+  bottom: 45px;
+  right: 6px;
+  position: absolute;
+
+}
+.group-1{
+  top:300px;
+  flex-direction: column;
+  width: 90%;
+}
+.mid{
+  margin-bottom:9px;
+  font-size: 24px;
+  color: #000;
+  font-weight: 800;
+}
+.bc{
+  position: absolute;
+  width: 212px;
+  height: 490px;
+  top: 0;
+  left: 0;
+  background-color: rgb(47, 52, 116);
+  z-index: -1;
+}
+.page1{
+  position: absolute;
+  background-color: #ffffff;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  height: 490px;
+  top: 0;
+  left: 0;
+  z-index: 10;
+}
+.time-bar{
+  width: 212px;
+  height: 35px;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, 0.05);
+  margin-top: 25px;
+}
+.time-text{
+  font-size: 18px;
+  color: #666666;
+  text-align: center;
+}
+.load{
+  margin-top: 8px;
+  font-size: 24px;
+  color: #000;
+  font-weight: 800;
+  width: 210px;
+  background-color: rgba(226, 216, 120, 0.267);
+  text-align: center;
+  padding: 12px 0;
+  border-radius: 8px;
+}
+.load2{
+  margin-top: 9px;
+  font-size: 28px;
+  color: #000;
+  font-weight: 800;
+  width: 85%;
+  text-align: center;
+}
+
+.scroll{
+  height: 405px;
+  text-align: left;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  z-index: 0;
+  flex: 1;
+  width: 100%;
+}
+.scroll-bottom-space{
+  height: 60px;
+}
+
+/* 存档项目样式 */
+.save-item {
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.back-btn-wrap {
+  position: absolute;
+  bottom: 0;
+  width: 212px;
+  height: 50px;
+  justify-content: center;
+  align-items: center;
+  z-index: 20;
+  background-color: rgba(255, 255, 255, 0.85);
+  border: 2px solid #333333;
+}
+.back-btn-text {
+  font-size: 26px;
+  color: #333333;
+  text-align: center;
+}
+
+.black-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 212px;
+  height: 490px;
+  background-color: #000000;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+.clock-text {
+  font-size: 60px;
+  color: #ffffff;
+  text-align: center;
+}
+.exit-btn {
+  font-size: 20px;
+  color: #999999;
+  text-align: center;
+  margin-top: 80px;
+}
+</style>

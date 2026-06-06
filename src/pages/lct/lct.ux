@@ -1,0 +1,490 @@
+<template>
+    <div class="page">
+        <img class="bcg" src="/common/bcgi/空_夕_夏.jpg"></img>
+        <img class="bt" src="/common/bt.png"></img>
+        <img class="hd" src="/common/hd.png"></img>
+
+        <div class="header">
+            <text class="title">流程图</text>
+        </div>
+
+        <div class="swiper-container">
+            <swiper class="swiper" index="{{page}}" indicator="false" loop="false" onchange="onSwiperChange">
+            <div class="page1" for="{{pages}}" tid="name">
+                <div class="content1">
+                    <text class="mid1">{{$item.name}}</text>
+                </div>
+                <scroll class="chapter-scroll" scroll-y="{{true}}" bounces="false">
+                    <div for="{{$item.chapters}}" tid="line" class="content" @click="loadStart($item.line)">
+                        <text class="mid">{{$item.label}}</text>
+                    </div>
+                    <text class="mid" if="{{$item.hasAfter}}" @click="loadStart($item.afterLine)">后日谈</text>
+                </scroll>
+            </div>
+        </swiper>
+        </div>
+
+        <div class="footer" onclick="back">
+            <text class="back-btn">返回</text>
+        </div>
+    </div>
+</template>
+
+<script>
+import storage from '@system.storage'
+import router from '@system.router'
+
+export default {
+    data: {
+        page: 0,
+        isSwitching: false,
+        switchTimer: null,
+        pages: [
+            {
+                name: '共通线',
+                hasAfter: false,
+                afterLine: 0,
+                chapters: [
+                    { line: 1, label: 'CHAPTER0-1' },
+                    { line: 609, label: 'CHAPTER0-2' },
+                    { line: 1248, label: 'CHAPTER1-1' },
+                    { line: 2052, label: 'CHAPTER1-2' },
+                    { line: 2709, label: 'CHAPTER1-3' },
+                    { line: 2961, label: 'CHAPTER1-4' },
+                    { line: 3262, label: 'CHAPTER1-5' },
+                    { line: 3613, label: '[选项1]' },
+                    { line: 3922, label: 'CHAPTER1-6' },
+                    { line: 4000, label: 'CHAPTER2-1' },
+                    { line: 4701, label: 'CHAPTER2-2' },
+                    { line: 4999, label: 'CHAPTER2-3' },
+                    { line: 5496, label: 'CHAPTER2-4' },
+                    { line: 5894, label: 'CHAPTER2-5' },
+                    { line: 5954, label: '[选项2]' },
+                    { line: 6425, label: 'CHAPTER2-6' },
+                    { line: 6926, label: 'CHAPTER3-1' },
+                    { line: 7200, label: 'CHAPTER3-2' },
+                    { line: 7580, label: 'CHAPTER3-3' },
+                    { line: 7705, label: '[选项3]' },
+                    { line: 8169, label: 'CHAPTER3-4' },
+                    { line: 8340, label: 'CHAPTER3-5' },
+                    { line: 8464, label: 'CHAPTER3-6' },
+                    { line: 8872, label: 'CHAPTER4-1' },
+                    { line: 9190, label: 'CHAPTER4-2' },
+                    { line: 9413, label: 'CHAPTER4-3' },
+                    { line: 9698, label: 'CHAPTER4-4' },
+                    { line: 10032, label: 'CHAPTER4-5' },
+                    { line: 10130, label: 'CHAPTER4-6' },
+                    { line: 10340, label: 'CHAPTER4-7' },
+                    { line: 10549, label: 'CHAPTER5-1' },
+                    { line: 10819, label: 'CHAPTER5-2' },
+                    { line: 11132, label: 'CHAPTER5-3' },
+                    { line: 11282, label: '[选项4]' },
+                    { line: 11566, label: '[选项5]' },
+                    { line: 11693, label: '[选项6]' },
+                    { line: 11905, label: 'CHAPTER5-4' },
+                    { line: 12080, label: '[选项7]' },
+                    { line: 12603, label: 'CHAPTER5-5' },
+                    { line: 12692, label: 'CHAPTER5-6' },
+                    { line: 13044, label: 'CHAPTER5-7' },
+                    { line: 13090, label: 'CHAPTER5-8' },
+                    { line: 13402, label: 'CHAPTER6-1' },
+                    { line: 13498, label: 'CHAPTER6-2' },
+                    { line: 13737, label: 'CHAPTER6-3' },
+                    { line: 13948, label: 'CHAPTER6-4' },
+                    { line: 14099, label: 'CHAPTER6-5' }
+                ]
+            },
+            {
+                name: '阳见',
+                hasAfter: true,
+                afterLine: 24546,
+                chapters: [
+                    { line: 14848, label: 'CHAPTER7-1' },
+                    { line: 15027, label: 'CHAPTER7-2' },
+                    { line: 15505, label: 'CHAPTER7-3' },
+                    { line: 15618, label: 'CHAPTER7-4' },
+                    { line: 16089, label: 'CHAPTER7-5' },
+                    { line: 16322, label: 'CHAPTER7-6' },
+                    { line: 16706, label: 'CHAPTER8-1' },
+                    { line: 16830, label: 'CHAPTER8-2' },
+                    { line: 17318, label: 'CHAPTER8-3' },
+                    { line: 17816, label: 'CHAPTER8-4' },
+                    { line: 18294, label: 'CHAPTER8-5' },
+                    { line: 18473, label: 'CHAPTER8-6' },
+                    { line: 19317, label: 'CHAPTER9-1' },
+                    { line: 19758, label: 'CHAPTER9-2' },
+                    { line: 20669, label: 'CHAPTER9-3' },
+                    { line: 20785, label: 'CHAPTER9-4' },
+                    { line: 20877, label: 'CHAPTER9-5' },
+                    { line: 21589, label: 'CHAPTER9-6' },
+                    { line: 21934, label: 'CHAPTER9-7' },
+                    { line: 22017, label: 'CHAPTER10-1' },
+                    { line: 22064, label: 'CHAPTER10-2' },
+                    { line: 22394, label: 'CHAPTER10-3' },
+                    { line: 22649, label: 'CHAPTER10-4' },
+                    { line: 22881, label: 'CHAPTER10-5' },
+                    { line: 22971, label: 'CHAPTER10-6' },
+                    { line: 23254, label: 'CHAPTER11-1' },
+                    { line: 23289, label: 'CHAPTER11-2' },
+                    { line: 23338, label: 'CHAPTER11-3' },
+                    { line: 23446, label: 'CHAPTER11-4' },
+                    { line: 24246, label: 'CHAPTER12-1' },
+                    { line: 24442, label: 'CHAPTER13-1' }
+                ]
+            },
+            {
+                name: '隐 杏珠',
+                hasAfter: true,
+                afterLine: 54247,
+                chapters: [
+                    { line: 46012, label: 'CHAPTER7-1' },
+                    { line: 46057, label: 'CHAPTER7-2' },
+                    { line: 46143, label: 'CHAPTER7-3' },
+                    { line: 46214, label: 'CHAPTER7-4' },
+                    { line: 46507, label: 'CHAPTER7-5' },
+                    { line: 46757, label: 'CHAPTER7-6' },
+                    { line: 46844, label: 'CHAPTER7-7' },
+                    { line: 46995, label: 'CHAPTER7-8' },
+                    { line: 47099, label: 'CHAPTER7-9' },
+                    { line: 47280, label: 'CHAPTER7-10' },
+                    { line: 47493, label: 'CHAPTER8-1' },
+                    { line: 47714, label: 'CHAPTER8-2' },
+                    { line: 47813, label: 'CHAPTER8-3' },
+                    { line: 48003, label: 'CHAPTER8-4' },
+                    { line: 48523, label: 'CHAPTER8-5' },
+                    { line: 48646, label: 'CHAPTER8-6' },
+                    { line: 48815, label: 'CHAPTER8-7' },
+                    { line: 48873, label: 'CHAPTER8-8' },
+                    { line: 48963, label: 'CHAPTER8-9' },
+                    { line: 49199, label: 'CHAPTER9-1' },
+                    { line: 49391, label: 'CHAPTER9-2' },
+                    { line: 49639, label: 'CHAPTER9-3' },
+                    { line: 49936, label: 'CHAPTER9-4' },
+                    { line: 50135, label: 'CHAPTER9-5' },
+                    { line: 51130, label: 'CHAPTER10-1' },
+                    { line: 51653, label: 'CHAPTER10-2' },
+                    { line: 51735, label: 'CHAPTER10-3' },
+                    { line: 51961, label: 'CHAPTER10-4' },
+                    { line: 52151, label: 'CHAPTER10-5' },
+                    { line: 52485, label: 'CHAPTER10-6' },
+                    { line: 52709, label: 'CHAPTER10-7' },
+                    { line: 52869, label: 'CHAPTER10-8' },
+                    { line: 52930, label: 'CHAPTER11-1' },
+                    { line: 53399, label: 'CHAPTER11-2' },
+                    { line: 53478, label: 'CHAPTER11-3' },
+                    { line: 54098, label: 'CHAPTER12-1' }
+                ]
+            },
+            {
+                name: '岛越 月望',
+                hasAfter: true,
+                afterLine: 67285,
+                chapters: [
+                    { line: 55039, label: 'CHAPTER6-6' },
+                    { line: 55201, label: 'CHAPTER7-1' },
+                    { line: 55635, label: 'CHAPTER7-2' },
+                    { line: 56120, label: 'CHAPTER7-3' },
+                    { line: 56421, label: 'CHAPTER7-4' },
+                    { line: 56534, label: 'CHAPTER7-5' },
+                    { line: 56843, label: 'CHAPTER7-6' },
+                    { line: 57071, label: 'CHAPTER7-7' },
+                    { line: 57139, label: 'CHAPTER7-8' },
+                    { line: 57573, label: 'CHAPTER7-9' },
+                    { line: 57620, label: 'CHAPTER7-10' },
+                    { line: 57792, label: 'CHAPTER7-11' },
+                    { line: 57861, label: 'CHAPTER7-12' },
+                    { line: 57921, label: 'CHAPTER7-13' },
+                    { line: 58385, label: 'CHAPTER7-14' },
+                    { line: 58957, label: 'CHAPTER7-15' },
+                    { line: 59168, label: 'CHAPTER7-16' },
+                    { line: 59296, label: 'CHAPTER7-17' },
+                    { line: 59417, label: 'CHAPTER7-18' },
+                    { line: 59517, label: 'CHAPTER7-19' },
+                    { line: 59635, label: 'CHAPTER7-20' },
+                    { line: 59877, label: 'CHAPTER7-21' },
+                    { line: 59928, label: 'CHAPTER7-22' },
+                    { line: 60225, label: 'CHAPTER7-23' },
+                    { line: 60473, label: 'CHAPTER8-1' },
+                    { line: 60831, label: 'CHAPTER8-2' },
+                    { line: 61555, label: 'CHAPTER8-3' },
+                    { line: 61735, label: 'CHAPTER8-4' },
+                    { line: 61929, label: 'CHAPTER8-5' },
+                    { line: 61987, label: 'CHAPTER8-6' },
+                    { line: 62406, label: 'CHAPTER8-7' },
+                    { line: 62563, label: 'CHAPTER8-8' },
+                    { line: 62797, label: 'CHAPTER8-9' },
+                    { line: 63856, label: 'CHAPTER8-10' },
+                    { line: 64044, label: 'CHAPTER8-11' },
+                    { line: 64067, label: 'CHAPTER8-12' },
+                    { line: 64181, label: 'CHAPTER8-13' },
+                    { line: 64430, label: 'CHAPTER8-14' },
+                    { line: 64553, label: 'CHAPTER8-15' },
+                    { line: 64790, label: 'CHAPTER8-16' },
+                    { line: 64810, label: 'CHAPTER8-17' },
+                    { line: 65808, label: 'CHAPTER8-18' },
+                    { line: 65995, label: 'CHAPTER8-19' },
+                    { line: 66121, label: 'CHAPTER9-1' },
+                    { line: 66858, label: 'CHAPTER9-2' },
+                    { line: 67096, label: 'CHAPTER9-3' },
+                    { line: 67192, label: 'CHAPTER10-1' },
+                    { line: 67251, label: 'CHAPTER11-1' }
+                ]
+            },
+            {
+                name: '二见原 莉莉子',
+                hasAfter: true,
+                afterLine: 34397,
+                chapters: [
+                    { line: 25170, label: 'CHAPTER7-1' },
+                    { line: 25653, label: 'CHAPTER7-2' },
+                    { line: 25870, label: 'CHAPTER7-3' },
+                    { line: 26482, label: 'CHAPTER7-4' },
+                    { line: 26535, label: 'CHAPTER7-5' },
+                    { line: 26596, label: 'CHAPTER7-6' },
+                    { line: 26849, label: 'CHAPTER7-7' },
+                    { line: 26913, label: 'CHAPTER8-1' },
+                    { line: 27402, label: 'CHAPTER8-2' },
+                    { line: 27451, label: 'CHAPTER8-3' },
+                    { line: 28085, label: 'CHAPTER8-4' },
+                    { line: 28334, label: 'CHAPTER8-5' },
+                    { line: 28658, label: 'CHAPTER8-6' },
+                    { line: 28727, label: 'CHAPTER8-7' },
+                    { line: 28872, label: 'CHAPTER8-8' },
+                    { line: 29812, label: 'CHAPTER8-9' },
+                    { line: 29975, label: 'CHAPTER8-10' },
+                    { line: 30348, label: 'CHAPTER8-11' },
+                    { line: 31164, label: 'CHAPTER9-1' },
+                    { line: 31569, label: 'CHAPTER9-2' },
+                    { line: 31995, label: 'CHAPTER9-3' },
+                    { line: 32086, label: 'CHAPTER9-4' },
+                    { line: 32419, label: 'CHAPTER9-5' },
+                    { line: 32739, label: 'CHAPTER9-6' },
+                    { line: 32782, label: 'CHAPTER9-7' },
+                    { line: 33778, label: 'CHAPTER9-8' },
+                    { line: 33820, label: 'CHAPTER10-1' },
+                    { line: 33885, label: 'CHAPTER10-2' },
+                    { line: 33943, label: 'CHAPTER10-3' },
+                    { line: 33970, label: 'CHAPTER10-4' },
+                    { line: 34340, label: 'CHAPTER10-5' }
+                ]
+            },
+            {
+                name: '砾川 美玖',
+                hasAfter: true,
+                afterLine: 45171,
+                chapters: [
+                    { line: 40613, label: 'CHAPTER7-1' },
+                    { line: 40700, label: 'CHAPTER7-2' },
+                    { line: 40790, label: 'CHAPTER7-3' },
+                    { line: 41086, label: 'CHAPTER7-4' },
+                    { line: 41177, label: 'CHAPTER7-5' },
+                    { line: 41592, label: 'CHAPTER7-6' },
+                    { line: 42034, label: 'CHAPTER7-7' },
+                    { line: 42302, label: 'CHAPTER7-8' },
+                    { line: 42535, label: 'CHAPTER7-9' },
+                    { line: 43127, label: 'CHAPTER8-1' },
+                    { line: 43965, label: 'CHAPTER9-1' },
+                    { line: 44205, label: 'CHAPTER9-2' },
+                    { line: 44523, label: 'CHAPTER10-1' },
+                    { line: 45121, label: 'CHAPTER10-2' }
+                ]
+            },
+            {
+                name: '茶园 那优花',
+                hasAfter: true,
+                afterLine: 39924,
+                chapters: [
+                    { line: 35096, label: 'CHAPTER7-1' },
+                    { line: 35719, label: 'CHAPTER7-2' },
+                    { line: 35764, label: 'CHAPTER7-3' },
+                    { line: 36226, label: 'CHAPTER8-1' },
+                    { line: 36519, label: 'CHAPTER8-2' },
+                    { line: 36793, label: 'CHAPTER8-3' },
+                    { line: 36880, label: 'CHAPTER8-4' },
+                    { line: 37107, label: 'CHAPTER8-5' },
+                    { line: 37151, label: 'CHAPTER8-6' },
+                    { line: 37226, label: 'CHAPTER9-1' },
+                    { line: 37405, label: 'CHAPTER9-2' },
+                    { line: 37462, label: 'CHAPTER9-3' },
+                    { line: 38183, label: 'CHAPTER9-4' },
+                    { line: 38257, label: 'CHAPTER9-5' },
+                    { line: 38870, label: 'CHAPTER9-6' },
+                    { line: 38990, label: 'CHAPTER9-7' },
+                    { line: 39175, label: 'CHAPTER10-1' },
+                    { line: 39889, label: 'CHAPTER11-1' }
+                ]
+            }
+        ]
+    },
+
+    onDestroy() {
+        // 清理定时器，防止内存泄漏
+        if (this.switchTimer) {
+            clearTimeout(this.switchTimer);
+            this.switchTimer = null;
+        }
+    },
+
+    onSwiperChange(e) {
+        // 防抖处理，避免快速滑动导致频繁触发
+        if (this.switchTimer) {
+            clearTimeout(this.switchTimer);
+        }
+
+        this.isSwitching = true;
+        this.page = e.index;
+
+        this.switchTimer = setTimeout(() => {
+            this.isSwitching = false;
+            this.switchTimer = null;
+        }, 150);
+    },
+
+    loadStart(a) {
+        // 滑动切换中禁止点击，防止冲突
+        if (this.isSwitching) return;
+
+        try {
+            storage.set({
+                key: 'readProgress',
+                value: JSON.stringify(a),
+                success: () => {},
+                fail: () => {}
+            });
+            router.push({ uri: 'pages/detail' });
+        } catch (e) {
+            console.error('跳转失败:', e);
+        }
+    },
+
+    back() {
+        router.back();
+    },
+};
+</script> 
+
+<style>
+.page {
+    flex-direction: column;
+    align-items: center;
+    width: 212px;
+    height: 490px;
+    background-color: #bbbbbb;
+    overflow: hidden;
+}
+
+.bcg {
+    position: absolute;
+    width: 212px;
+    height: 490px;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    object-fit: cover;
+}
+
+.bt {
+    position: absolute;
+    bottom: 0;
+    z-index: 5;
+}
+
+.hd {
+    position: absolute;
+    top: 0;
+    z-index: 5;
+}
+
+.header {
+    width: 212px;
+    justify-content: center;
+    align-items: center;
+    margin: 11px 0;
+    z-index: 10;
+}
+
+.title { 
+    font-size: 30px;
+    color: #ebebeb;
+    font-weight: bold;
+} 
+
+.swiper-container {
+    width: 212px;
+    height: 380px;
+    overflow: hidden;
+}
+
+.swiper {
+    width: 212px;
+    height: 380px;
+}
+
+.page1 {
+    flex-direction: column;
+    align-items: center;
+    width: 212px;
+    height: 380px;
+} 
+
+.content1 {
+    width: 194px;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 0;
+    background-color: rgba(0, 0, 0, 0.315);
+    border-radius: 9px;
+    border: 1px solid #e0e0e0;
+    margin-top: 9px;
+    margin-bottom: 9px;
+}
+
+.chapter-scroll {
+    width: 180px;
+    height: 320px;
+    flex-direction: column;
+    align-items: center;
+}
+
+.mid {
+    font-size: 22px;
+    color: #000;
+    background-color: rgba(255, 255, 255, 0.726);
+    width: 168px;
+    border-radius: 9px;
+    padding: 8px;
+    border: 1px solid #e0e0e0;
+    text-align: center;
+    margin-bottom: 6px;
+}
+
+.mid1 {
+    font-size: 28px;
+    color: #ffffff;
+    font-weight: 800;
+}
+
+.content {
+    flex-direction: column;
+    align-items: center;
+    width: 180px;
+}
+
+.footer {
+    position: absolute;
+    bottom: 0;
+    width: 212px;
+    height: 65px;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+    background-color: rgba(255, 255, 255, 0.85);
+    border: 2px solid #333333;
+}
+
+.back-btn {
+    font-size: 26px;
+    color: #333333;
+    text-align: center;
+}
+</style>

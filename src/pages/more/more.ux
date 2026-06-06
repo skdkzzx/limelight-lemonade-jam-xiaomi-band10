@@ -1,0 +1,270 @@
+<template> 
+    <div class="page"> 
+        <img class="bcg" src="/common/bcgi/空_夕_夏.jpg"></img> 
+        <img class="bt" src="/common/bt.png"></img> 
+        <img class="hd" src="/common/hd.png"></img> 
+        
+        <scroll id="mainScroll" class="scroll" scroll-y="{{true}}" if="{{!showAS}}">
+            <div class="header">
+                <text class="title">更多</text> 
+            </div>
+            <div class="content" onclick="lctruote">
+                <text class="mid">流程图</text>
+            </div>
+            <div class="content" onclick="cgruote">
+                <text class="mid">鉴赏模式</text>
+            </div>
+            <div class="content" onclick="afterstoryshow">
+                <text class="mid">后日谈</text>
+            </div>
+        </scroll>
+        
+        <div class="page1" if="{{showAS}}">
+            <img class="bcg" src="/common/bcgi/空_夕_夏.jpg"></img> 
+            <img class="bt" src="/common/bt.png"></img> 
+            <img class="hd" src="/common/hd.png"></img> 
+
+            <div class="header">
+                <text class="title">后日谈</text> 
+            </div>
+
+            <swiper class="as-swiper" index="{{asIndex}}" indicator="false" loop="true" onchange="onSwiperChange">
+                <div class="as-page" for="{{afterStories}}" tid="name">
+                    <image class="cig" src="{{$item.img}}"></image>
+                    <text class="mid1">{{$item.name}}</text>
+                    <div class="startBtn">
+                        <text class="startText" onclick="loadStart($item.line)">开始</text>
+                    </div>
+                </div>
+            </swiper>
+        </div>
+        
+        <!-- 返回按钮 -->
+        <div class="back-btn-wrap" onclick="back">
+            <text class="back-btn-text">返回</text>
+        </div>
+    </div> 
+</template> 
+
+<script> 
+import storage from '@system.storage'
+import router from '@system.router' 
+
+export default { 
+    data: { 
+        showAS: false, 
+        asIndex: 0,
+        afterStories: [
+            { name: '阳见', img: '/common/cimg/hz02_1.png', line: 24546 },
+            { name: '杏珠', img: '/common/cimg/xz05_1.png', line: 54247 },
+            { name: '月望', img: '/common/cimg/yw02_1.png', line: 67285 },
+            { name: '莉莉子', img: '/common/cimg/llz01_1.png', line: 34397 },
+            { name: '美玖', img: '/common/cimg/mj01_1.png', line: 45171 },
+            { name: '那优花', img: '/common/cimg/nyh01_1.png', line: 39924 },
+        ],
+    }, 
+    
+    onSwiperChange(e) {
+        this.asIndex = e.index;
+    },
+    
+    // 返回逻辑
+    back() { 
+        if (!this.showAS) {
+            router.back({ 
+                uri: 'pages/index', 
+            });
+        } else {
+            this.showAS = false;
+        }
+    }, 
+    
+    // 跳转到流程图页面
+    lctruote() {
+        router.push({
+            uri: 'pages/lct',
+        });
+    },
+    
+    // 跳转到CG鉴赏页面
+    cgruote() {
+        router.push({
+            uri: 'pages/cgs',
+        });
+    },
+    
+    // 显示后日谈选择界面
+    afterstoryshow() {
+        this.showAS = true;
+    },
+    
+    // 开始后日谈（需要实现具体逻辑）
+
+    loadStart(a){
+    storage.set({
+      key: 'readProgress',
+      value: JSON.stringify(a),
+      success: () => {},
+      fail: () => {}
+    });
+    router.replace({ uri:'pages/detail' });
+  },
+}; 
+</script> 
+
+<style> 
+.page {
+    flex-direction: column;
+    align-items: center;
+    width: 212px;
+    height: 490px;
+    background-color: #bbbbbb;
+    overflow: hidden;
+}
+
+.bcg {
+    position: absolute;
+    width: 212px;
+    height: 490px;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    object-fit: cover;
+}
+
+.bt {
+    position: absolute;
+    bottom: 0;
+    width: 212px;
+    z-index: 5;
+}
+
+.hd {
+    position: absolute;
+    top: 0;
+    width: 212px;
+    z-index: 5;
+}
+
+.page1 {
+    flex-direction: column;
+    align-items: center;
+    width: 212px;
+    height: 490px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+.as-swiper {
+    width: 212px;
+    height: 400px;
+}
+
+.as-page {
+    flex-direction: column;
+    align-items: center;
+    width: 212px;
+    height: 400px;
+}
+
+.cig {
+    position: absolute;
+    top: 50px;
+    left: 6px;
+    width: 180px;
+    height: 450px;
+    object-fit: contain;
+    z-index: -1;
+}
+
+.header {
+    width: 212px;
+    justify-content: center;
+    align-items: center;
+    margin: 11px 0;
+    z-index: 10;
+}
+
+.title { 
+    font-size: 30px;
+    color: #ebebeb;
+    font-weight: bold;
+} 
+
+.scroll {
+    width: 180px;
+    height: 445px;
+    flex-direction: column;
+    align-items: center;
+    z-index: 2;
+}
+
+.content {
+    width: 174px;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.726);
+    border-radius: 9px;
+    border: 1px solid #e0e0e0;
+    margin: 9px;
+}
+
+.mid {
+    font-size: 28px;
+    color: #000;
+    font-weight: 800;
+}
+
+.mid1 {
+    text-align: center;
+    width: 212px;
+    background-color: #f1dd28;
+    font-size: 32px;
+    color: #250c4d;
+    font-weight: 800;
+    position: absolute;
+    bottom: 70px;
+}
+
+.startBtn {
+    position: absolute;
+    bottom: 23px;
+    left: 0;
+    width: 212px;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 0;
+    background-color: rgba(255, 255, 255, 0.85);
+    border-radius: 0;
+    border: 1px solid #ffffff;
+    box-shadow: 0 2px 7px rgba(0, 0, 0, 0.3);
+}
+
+.startText {
+    font-size: 20px;
+    color: #333;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.back-btn-wrap {
+    position: absolute;
+    bottom: 0;
+    width: 212px;
+    height: 65px;
+    justify-content: center;
+    align-items: center;
+    z-index: 20;
+    background-color: rgba(255, 255, 255, 0.85);
+    border: 2px solid #333333;
+}
+
+.back-btn-text {
+    font-size: 26px;
+    color: #333333;
+    text-align: center;
+}
+</style>
