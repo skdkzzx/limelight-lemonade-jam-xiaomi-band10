@@ -1,6 +1,6 @@
 limelight-lemonade-jam - 小米手环10移植版
 
-基于 [hezdaaa](https://github.com/hezdaaa) 的 [limelight-lemonade-jam-miband](https://github.com/hezdaaa/limelight-lemonade-jam-miband) 小米手环 9 Pro 源码修改优化，适配小米手环 9。
+基于 [hezdaaa](https://github.com/hezdaaa) 的 [limelight-lemonade-jam-miband](https://github.com/hezdaaa/limelight-lemonade-jam-miband) 小米手环 9 Pro 源码修改优化，适配小米手环 10
 
 ---
 
